@@ -33,6 +33,8 @@ import java.util.List;
  */
 public class ForecastFragment extends android.support.v4.app.Fragment {
 
+    private ForecastAdapter forecastAdapter;
+
     public ForecastFragment() {
 
     }
@@ -46,7 +48,8 @@ public class ForecastFragment extends android.support.v4.app.Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-       inflater.inflate(R.menu.forecastfragment, menu);
+        // seperti ngerender layout menu di file forecastfragment ke menu
+        inflater.inflate(R.menu.forecastfragment, menu);
     }
 
     @Override
@@ -54,7 +57,7 @@ public class ForecastFragment extends android.support.v4.app.Fragment {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
             FetchWeatherTask weatherTask = new FetchWeatherTask();
-            weatherTask.execute("94043");
+            weatherTask.execute("Surabaya"); // eksekusi AsynchronousTask (Thread Baru)
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -84,6 +87,8 @@ public class ForecastFragment extends android.support.v4.app.Fragment {
         return rootView;
     }
 
+    //make Asynchronous Task, Asynchronous task seperti sebuah proses yang berjalan di luar main thread (UI Thread)
+    //AsyncTask memiliki 3 Parameter, yg pertama untuk parameter, kedua prosesnya, ketiga resultnya (return value)
     public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
@@ -173,6 +178,7 @@ public class ForecastFragment extends android.support.v4.app.Fragment {
             int numDays = 7;
 
             try {
+                // Construct the URL to link openweathermap.org
                 final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?";
                 final String QUERY_PARAM ="q";
                 final String FORMAT_PARAM = "mode";
@@ -231,15 +237,25 @@ public class ForecastFragment extends android.support.v4.app.Fragment {
                         Log.e(LOG_TAG, "Error closing stream", e);
                     }
                 }
-            }
-
-            try {
-                return getWeatherDataFromJson(forecastJsonStr, numDays);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
+                try {
+                    return getWeatherDataFromJson(forecastJsonStr, numDays);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, e.getMessage(), e);
+                    e.printStackTrace();
+                }
             }
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(String[] strings) {
+            if (strings != null) {
+                forecastAdapter.clear();
+                for(String weather : strings) {
+                    forecastAdapter.add(weather);
+                }
+            }
+            super.onPostExecute(strings);
         }
     }
 }
